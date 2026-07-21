@@ -1,3 +1,4 @@
+from database.db_manager import get_portfolio
 from database.db_manager import (
     add_to_portfolio,
     get_portfolio,
