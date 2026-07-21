@@ -5,7 +5,8 @@ import pandas as pd
 from auth.auth_manager import create_user, verify_user
 
 # Import portfolio modules
-from portfolio.portfolio_manager import add_holding, get_portfolio, delete_holding
+from portfolio.portfolio_manager import add_holding, delete_holding
+from database.db_manager import get_portfolio
 from portfolio.excel_import import import_portfolio_from_excel
 
 # Import watchlist modules
