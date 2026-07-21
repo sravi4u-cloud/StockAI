@@ -7,6 +7,8 @@ from database.db_manager import (
 from data.stock_fetcher import fetch_stock_data
 from datetime import datetime
 
+from dbm import sqlite3
+
 def add_holding():
     symbol = input("Enter NSE stock symbol: ").upper() + ".NS"
     quantity = int(input("Enter quantity: "))
@@ -23,6 +25,7 @@ def view_portfolio():
     if not holdings:
         print("Portfolio is empty.")
         return
+    
 
     total_invested = 0
     total_current = 0
@@ -61,4 +64,19 @@ def remove_holding():
     holding_id = int(input("\nEnter Holding ID to delete: "))
 
     delete_from_portfolio(holding_id)
+    print("Holding deleted successfully!")
+
+    import sqlite3
+
+DB_PATH = "database/stockai.db"
+
+def delete_holding(holding_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM portfolio WHERE id = ?", (holding_id,))
+
+    conn.commit()
+    conn.close()
+
     print("Holding deleted successfully!")
