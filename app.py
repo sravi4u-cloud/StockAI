@@ -1,11 +1,46 @@
 import streamlit as st
+import pandas as pd
+
+# Import authentication
 from auth.auth_manager import create_user, verify_user
 
-# Session state for login
+# Import portfolio modules
+from portfolio.portfolio_manager import add_holding, get_portfolio, delete_holding
+from portfolio.excel_import import import_portfolio_from_excel
+
+# Import watchlist modules
+from watchlist.watchlist_manager import add_to_watchlist, get_watchlist, remove_from_watchlist
+
+# Import valuation modules
+from valuation.intrinsic_value import calculate_intrinsic_value
+from valuation.dcf_engine import calculate_dcf
+
+# Import AI modules
+from ai_engine.recommendation_engine import calculate_recommendation
+from ai_engine.quality_engine import smart_quality_valuation_engine
+from ai_engine.sector_adjusted_engine import sector_adjusted_fair_value
+from ai_engine.earnings_forecast import ai_earnings_forecast
+
+# Import analytics modules
+from portfolio.analytics import portfolio_dashboard
+from portfolio.action_plan import personalized_action_plan
+
+# Import screener and analysis modules
+from screener.realtime_screener import run_realtime_screener
+from fundamental.financial_analysis import financial_statement_analysis
+from sentiment.news_sentiment import analyze_news_sentiment
+
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="StockAI Professional Dashboard",
+    page_icon="📈",
+    layout="wide"
+)
+
+# ---------------- LOGIN SYSTEM ----------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# Login/Register page
 if not st.session_state.logged_in:
     st.title("🔐 StockAI Login")
 
@@ -28,142 +63,167 @@ if not st.session_state.logged_in:
         new_password = st.text_input("Choose Password", type="password")
 
         if st.button("Register"):
-            create_user(new_username, new_password)
-            st.success("Account created! Please login.")
+            if create_user(new_username, new_password):
+                st.success("Account created! Please login.")
+            else:
+                st.error("Username already exists!")
 
     st.stop()
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from database.db_manager import get_portfolio
-from data.stock_fetcher import fetch_stock_data
 
-if st.sidebar.button("Logout"):
-    st.session_state.logged_in = False
-    st.rerun()
-st.set_page_config(
-    page_title="StockAI Dashboard",
-    page_icon="📈",
-    layout="wide"
-)
-
-# ---------------- HEADER ----------------
+# ---------------- MAIN DASHBOARD ----------------
 st.title("📈 StockAI Professional Dashboard")
 st.markdown("AI-powered portfolio management and stock analysis platform")
 
-# ---------------- LOAD PORTFOLIO ----------------
-holdings = get_portfolio()
+# Logout button
+if st.sidebar.button("Logout"):
+    st.session_state.logged_in = False
+    st.rerun()
 
-if holdings:
-    portfolio_data = []
-    total_investment = 0
-    total_current_value = 0
+# Sidebar menu
+menu = st.sidebar.selectbox(
+    "Choose Module",
+    [
+        "Dashboard",
+        "Portfolio Management",
+        "Watchlist Management",
+        "Excel Portfolio Import",
+        "Intrinsic Value Calculator",
+        "DCF Valuation Engine",
+        "AI BUY/HOLD/SELL Recommendation",
+        "Smart Quality & Valuation Engine",
+        "Sector-Adjusted Fair Value Engine",
+        "Personalized Portfolio Action Plan",
+        "Real-Time Stock Screener",
+        "Financial Statement Analysis",
+        "News & Sentiment Analysis",
+        "AI Earnings Forecast"
+    ]
+)
 
-    for holding in holdings:
-        _, symbol, quantity, buy_price, _ = holding
+# ---------------- DASHBOARD ----------------
+if menu == "Dashboard":
+    st.header("Portfolio Dashboard")
 
-        stock_data = fetch_stock_data(symbol)
+    holdings = get_portfolio()
 
-        if stock_data:
-            current_price = stock_data["current_price"]
-            current_value = quantity * current_price
-            investment = quantity * buy_price
-            pnl = current_value - investment
-
-            total_investment += investment
-            total_current_value += current_value
-
+    if holdings:
+        portfolio_data = []
+        for h in holdings:
             portfolio_data.append({
-                "Symbol": symbol,
-                "Quantity": quantity,
-                "Buy Price": buy_price,
-                "Current Price": round(current_price, 2),
-                "Investment": round(investment, 2),
-                "Current Value": round(current_value, 2),
-                "P&L": round(pnl, 2),
-                "Sector": stock_data.get("sector", "Unknown")
+                "Symbol": h[1],
+                "Quantity": h[2],
+                "Buy Price": h[3]
             })
 
-    df = pd.DataFrame(portfolio_data)
-
-    # ---------------- METRICS ----------------
-    total_pnl = total_current_value - total_investment
-    total_return = (total_pnl / total_investment) * 100 if total_investment > 0 else 0
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    col1.metric("Total Investment", f"₹{total_investment:,.0f}")
-    col2.metric("Current Value", f"₹{total_current_value:,.0f}")
-    col3.metric("Total P&L", f"₹{total_pnl:,.0f}", f"{total_return:.2f}%")
-    col4.metric("Holdings", len(df))
-
-    # ---------------- PORTFOLIO TABLE ----------------
-    st.subheader("Portfolio Holdings")
-    st.dataframe(df, use_container_width=True)
-
-    # ---------------- CHARTS ----------------
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Sector Allocation")
-        sector_df = df.groupby("Sector")["Current Value"].sum().reset_index()
-        fig = px.pie(
-            sector_df,
-            values="Current Value",
-            names="Sector",
-            title="Portfolio by Sector"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        st.subheader("Top Holdings")
-        top_df = df.sort_values("Current Value", ascending=False).head(10)
-        fig = px.bar(
-            top_df,
-            x="Symbol",
-            y="Current Value",
-            title="Top 10 Holdings by Value"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    # ---------------- GAINERS / LOSERS ----------------
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("Top Gainers")
-        gainers = df.sort_values("P&L", ascending=False).head(5)
-        st.dataframe(gainers[["Symbol", "P&L"]], use_container_width=True)
-
-    with col2:
-        st.subheader("Top Losers")
-        losers = df.sort_values("P&L").head(5)
-        st.dataframe(losers[["Symbol", "P&L"]], use_container_width=True)
-
-else:
-    st.warning("No portfolio holdings found. Please add or import your portfolio first.")
-
-# ---------------- STOCK ANALYSIS ----------------
-st.subheader("🔍 Real-Time Stock Analysis")
-
-symbol = st.text_input("Enter NSE Stock Symbol (e.g., HAL, SBIN, INFY)")
-
-if st.button("Analyze Stock") and symbol:
-    if not symbol.endswith(".NS"):
-        symbol += ".NS"
-
-    stock_data = fetch_stock_data(symbol)
-
-    if stock_data:
-        col1, col2, col3 = st.columns(3)
-
-        col1.metric("Current Price", f"₹{stock_data['current_price']:.2f}")
-        col2.metric("P/E Ratio", f"{stock_data['pe_ratio']:.2f}")
-        col3.metric("ROE", f"{stock_data['roe']*100:.2f}%")
-
-        st.write("### Company Information")
-        st.write(f"**Company:** {stock_data.get('company_name', 'N/A')}")
-        st.write(f"**Sector:** {stock_data.get('sector', 'N/A')}")
-        st.write(f"**Market Cap:** ₹{stock_data.get('market_cap', 0)/1e7:,.0f} Cr")
-
+        df = pd.DataFrame(portfolio_data)
+        st.dataframe(df, use_container_width=True)
     else:
-        st.error("Could not fetch stock data.")
+        st.info("No portfolio holdings found.")
+
+# ---------------- PORTFOLIO MANAGEMENT ----------------
+elif menu == "Portfolio Management":
+    st.header("Portfolio Management")
+
+    tab1, tab2, tab3 = st.tabs(["Add Holding", "View Portfolio", "Delete Holding"])
+
+    with tab1:
+        symbol = st.text_input("Stock Symbol")
+        quantity = st.number_input("Quantity", min_value=1)
+        buy_price = st.number_input("Buy Price", min_value=0.0)
+
+        if st.button("Add Holding"):
+            add_holding(symbol, quantity, buy_price)
+            st.success(f"{symbol} added to portfolio!")
+
+    with tab2:
+        holdings = get_portfolio()
+        if holdings:
+            df = pd.DataFrame(holdings, columns=["ID", "Symbol", "Quantity", "Buy Price", "Buy Date"])
+            st.dataframe(df, use_container_width=True)
+        else:
+            st.info("Portfolio is empty.")
+
+    with tab3:
+        holding_id = st.number_input("Enter Holding ID to Delete", min_value=1)
+        if st.button("Delete Holding"):
+            delete_holding(holding_id)
+            st.success("Holding deleted successfully!")
+
+# ---------------- WATCHLIST MANAGEMENT ----------------
+elif menu == "Watchlist Management":
+    st.header("Watchlist Management")
+
+    tab1, tab2 = st.tabs(["Add to Watchlist", "View Watchlist"])
+
+    with tab1:
+        symbol = st.text_input("Stock Symbol")
+        target_price = st.number_input("Target Price", min_value=0.0)
+
+        if st.button("Add to Watchlist"):
+            add_to_watchlist(symbol, target_price)
+            st.success(f"{symbol} added to watchlist!")
+
+    with tab2:
+        watchlist = get_watchlist()
+        if watchlist:
+            df = pd.DataFrame(watchlist, columns=["ID", "Symbol", "Target Price", "Alert Enabled"])
+            st.dataframe(df, use_container_width=True)
+        else:
+            st.info("Watchlist is empty.")
+
+# ---------------- EXCEL IMPORT ----------------
+elif menu == "Excel Portfolio Import":
+    st.header("Import Portfolio from Excel")
+
+    uploaded_file = st.file_uploader("Choose Excel file", type=["xlsx"])
+
+    if uploaded_file is not None:
+        with open("temp_portfolio.xlsx", "wb") as f:
+            f.write(uploaded_file.getbuffer())
+
+        import_portfolio_from_excel("temp_portfolio.xlsx")
+        st.success("Portfolio imported successfully!")
+
+# ---------------- VALUATION ENGINES ----------------
+elif menu == "Intrinsic Value Calculator":
+    st.header("Intrinsic Value Calculator")
+    calculate_intrinsic_value()
+
+elif menu == "DCF Valuation Engine":
+    st.header("DCF Valuation Engine")
+    calculate_dcf()
+
+# ---------------- AI ENGINES ----------------
+elif menu == "AI BUY/HOLD/SELL Recommendation":
+    st.header("AI BUY/HOLD/SELL Recommendation")
+    calculate_recommendation()
+
+elif menu == "Smart Quality & Valuation Engine":
+    st.header("Smart Quality & Valuation Engine")
+    smart_quality_valuation_engine()
+
+elif menu == "Sector-Adjusted Fair Value Engine":
+    st.header("Sector-Adjusted Fair Value Engine")
+    sector_adjusted_fair_value()
+
+elif menu == "Personalized Portfolio Action Plan":
+    st.header("Personalized Portfolio Action Plan")
+    personalized_action_plan()
+
+# ---------------- SCREENER ----------------
+elif menu == "Real-Time Stock Screener":
+    st.header("Real-Time Stock Screener")
+    run_realtime_screener()
+
+# ---------------- FINANCIAL ANALYSIS ----------------
+elif menu == "Financial Statement Analysis":
+    st.header("Financial Statement Analysis")
+    financial_statement_analysis()
+
+elif menu == "News & Sentiment Analysis":
+    st.header("News & Sentiment Analysis")
+    analyze_news_sentiment()
+
+elif menu == "AI Earnings Forecast":
+    st.header("AI Earnings Forecast & Multibagger Prediction")
+    ai_earnings_forecast()
