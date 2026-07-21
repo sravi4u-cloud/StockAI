@@ -1,44 +1,43 @@
-from database.db_manager import (
-    add_to_watchlist,
-    get_watchlist,
-    delete_from_watchlist
-)
-from data.stock_fetcher import fetch_stock_data
+import sqlite3
 
-def add_stock():
-    symbol = input("Enter NSE stock symbol: ").upper() + ".NS"
-    target_price = float(input("Enter target buy price: ₹"))
+DB_PATH = "database/stockai.db"
 
-    add_to_watchlist(symbol, target_price)
-    print("Stock added to watchlist successfully!")
+def add_to_watchlist(symbol, target_price):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
-def view_watchlist():
-    watchlist = get_watchlist()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS watchlist (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        symbol TEXT,
+        target_price REAL,
+        alert_enabled INTEGER DEFAULT 1
+    )
+    """)
 
-    if not watchlist:
-        print("Watchlist is empty.")
-        return
+    cursor.execute(
+        "INSERT INTO watchlist (symbol, target_price) VALUES (?, ?)",
+        (symbol.upper(), target_price)
+    )
 
-    print("\n=== WATCHLIST ===")
+    conn.commit()
+    conn.close()
 
-    for item in watchlist:
-        watchlist_id, symbol, target_price, alert_enabled = item
+def get_watchlist():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
-        stock_data = fetch_stock_data(symbol)
-        current_price = stock_data["current_price"] if stock_data else 0
+    cursor.execute("SELECT * FROM watchlist")
+    watchlist = cursor.fetchall()
 
-        print(f"\nID: {watchlist_id}")
-        print(f"Stock: {symbol}")
-        print(f"Current Price: ₹{current_price}")
-        print(f"Target Price: ₹{target_price}")
+    conn.close()
+    return watchlist
 
-        # Price alert
-        if current_price <= target_price:
-            print("ALERT: Stock has reached your target price!")
+def remove_from_watchlist(watchlist_id):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
-def remove_stock():
-    view_watchlist()
-    watchlist_id = int(input("\nEnter Watchlist ID to delete: "))
+    cursor.execute("DELETE FROM watchlist WHERE id = ?", (watchlist_id,))
 
-    delete_from_watchlist(watchlist_id)
-    print("Stock removed from watchlist successfully!")
+    conn.commit()
+    conn.close()
