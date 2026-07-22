@@ -2,7 +2,11 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import yfinance as yf
 
-BOT_TOKEN = "8727403962:AAGtnz2WJyuj1WPAaABD5RB_knUpjh9Fl3g"
+import os
+from telegram import Bot
+
+TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+bot = Bot(token=TOKEN)
 
 # Simple in-memory storage
 watchlist = []
