@@ -1,8 +1,6 @@
 streamlit
-plotly
 pandas
+plotly
 yfinance
 requests
-feedparser
-textblob
-bcrypt
+openpyxl

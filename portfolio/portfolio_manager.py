@@ -1,3 +1,4 @@
+
 from database.db_manager import get_portfolio
 from database.db_manager import (
     add_to_portfolio,
@@ -7,7 +8,7 @@ from database.db_manager import (
 from data.stock_fetcher import fetch_stock_data
 from datetime import datetime
 
-from dbm import sqlite3
+import sqlite3
 
 def add_holding():
     symbol = input("Enter NSE stock symbol: ").upper() + ".NS"

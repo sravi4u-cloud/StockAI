@@ -1,8 +1,13 @@
 import requests
 
 # Replace with your Telegram Bot Token and Chat ID
-BOT_TOKEN = "8727403962:AAGtnz2WJyuj1WPAaABD5RB_knUpjh9Fl3g"
-CHAT_ID = "1920028587"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 def send_telegram_alert(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"

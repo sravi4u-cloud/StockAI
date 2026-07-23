@@ -13,9 +13,11 @@ from portfolio.portfolio_manager import (
     remove_holding
 )
 from watchlist.watchlist_manager import (
-    add_stock,
-    view_watchlist,
-    remove_stock
+    
+    add_to_watchlist,
+    get_watchlist,
+    remove_from_watchlist,
+    
 )
 from portfolio.analytics import portfolio_dashboard
 from portfolio.excel_import import import_portfolio_from_excel
@@ -53,19 +55,19 @@ def portfolio_menu():
 def watchlist_menu():
     while True:
         print("\n=== WATCHLIST MENU ===")
-        print("1. Add Stock")
-        print("2. View Watchlist")
-        print("3. Delete Stock")
+        print("1. add_to_watchlist")
+        print("2. get_watchlist")
+        print("3. remove_from_watchlist")
         print("4. Back to Main Menu")
 
         choice = input("Enter choice: ")
 
         if choice == "1":
-            add_stock()
+            add_to_watchlist()
         elif choice == "2":
-            view_watchlist()
+            get_watchlist()
         elif choice == "3":
-            remove_stock()
+            remove_from_watchlist()
         elif choice == "4":
             break
         else:

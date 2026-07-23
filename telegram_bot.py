@@ -1,9 +1,14 @@
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import Application, CommandHandler, ContextTypes
 import yfinance as yf
 
 import os
-from telegram import Bot
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 bot = Bot(token=TOKEN)
@@ -204,3 +209,4 @@ app.add_handler(CommandHandler("portfolio", show_portfolio))
 
 print("Bot is running...")
 app.run_polling()
+app = Application.builder().token(BOT_TOKEN).build()

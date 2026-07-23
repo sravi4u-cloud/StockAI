@@ -41,3 +41,29 @@ def remove_from_watchlist(watchlist_id):
 
     conn.commit()
     conn.close()
+
+def add_stock():
+    symbol = input("Enter NSE stock symbol: ").upper() + ".NS"
+    target_price = float(input("Enter target price: ₹"))
+    add_to_watchlist(symbol, target_price)
+    print("Stock added to watchlist successfully!")
+
+
+def view_watchlist():
+    watchlist = get_watchlist()
+
+    if not watchlist:
+        print("Watchlist is empty.")
+        return
+
+    print("\n=== WATCHLIST ===")
+    print("ID\tSymbol\tTarget Price")
+
+    for row in watchlist:
+        print(f"{row[0]}\t{row[1]}\t₹{row[2]}")
+
+
+def remove_stock():
+    watchlist_id = int(input("Enter Watchlist ID to delete: "))
+    remove_from_watchlist(watchlist_id)
+    print("Stock removed successfully!")
