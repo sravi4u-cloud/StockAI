@@ -4,3 +4,4 @@ plotly
 yfinance
 requests
 openpyxl
+python-dotenv
